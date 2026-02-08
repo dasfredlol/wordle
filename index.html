@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Wordle (DE)</title>
+
+<style>
+:root{
+  --bg:#0f1115; --panel:#151923; --tile:#222736; --border:#2f3647;
+  --text:#e8eaf0; --muted:#9aa3b2;
+
+  --gray:#7f8795;
+  --black:#3a3a3c;
+  --yellow:#c9b458;
+  --green:#6aaa64;
+
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial}
+html,body{height:100%}
+body{
+  margin:0;
+  min-height:100svh;
+  display:grid;
+  place-items:center;
+  padding: max(14px, env(safe-area-inset-top, 0px)) 14px calc(14px + var(--safe-bottom));
+  background:radial-gradient(1200px 800px at 50% 10%, #1a2040 0%, var(--bg) 55%);
+  color:var(--text);
+}
+
+.wrapper{
+  width:min(460px, 96vw);
+  background:color-mix(in oklab, var(--panel) 92%, transparent);
+  border:1px solid color-mix(in oklab, var(--border) 70%, transparent);
+  border-radius:18px;
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
+  padding:16px;
+}
+@media (max-width: 380px){
+  .wrapper{ padding:14px; border-radius:16px; }
+}
+
+.header{display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:6px}
+h1{margin:0; font-size:16px; letter-spacing:.08em; text-transform:uppercase}
+.status{font-size:12px; color:var(--muted); text-align:right}
+.message{min-height:22px; margin:8px 0 12px; display:grid; place-items:center; font-size:13px; color:var(--muted)}
+
+.grid{
+  display:grid; grid-template-rows:repeat(6,1fr);
+  gap:8px;
+  margin:0 auto 12px;
+  padding:10px;
+  border-radius:14px;
+  background:rgba(0,0,0,.18);
+  border:1px solid rgba(255,255,255,.04);
+}
+.row{display:grid; grid-template-columns:repeat(5,1fr); gap:8px}
+
+.tile{
+  aspect-ratio:1/1;
+  background:var(--tile);
+  border:1.5px solid var(--border);
+  border-radius:12px;
+  display:grid; place-items:center;
+  font-size: clamp(20px, 6vw, 26px);
+  font-weight:850;
+  text-transform:uppercase;
+  user-select:none;
+  transition:transform .08s ease, background .2s ease, border-color .2s ease;
+}
+.tile.filled{border-color:color-mix(in oklab, var(--gray) 60%, var(--border))}
+.tile.bump{transform:scale(1.03)}
+.tile.green{background:var(--green); border-color:var(--green)}
+.tile.yellow{background:var(--yellow); border-color:var(--yellow)}
+.tile.black{background:var(--black); border-color:var(--black)}
+
+.keyboard{
+  display:grid;
+  gap:8px;
+  margin-bottom:8px;
+  touch-action: manipulation;
+}
+.key-row{display:flex; justify-content:center; gap:6px}
+
+.key{
+  flex: 1 1 0;
+  border:1px solid rgba(255,255,255,.07);
+  background:color-mix(in oklab, var(--gray) 80%, #0000);
+  color:#fff;
+  border-radius:10px;
+  padding: 12px 8px;
+  min-width: 0;
+  min-height: 44px;
+  cursor:pointer;
+  font-weight:850;
+  text-transform:uppercase;
+  font-size: clamp(12px, 3.5vw, 14px);
+  transition:transform .05s ease, filter .1s ease, background .2s ease;
+}
+.key:active{transform:translateY(1px); filter:brightness(.95)}
+.key.wide{flex: 1.6 1 0; min-width: 70px;}
+.key.green{background:var(--green)}
+.key.yellow{background:var(--yellow)}
+.key.black{background:var(--black)}
+
+/* ===== Footer Layout (2 gleichbreite Buttons + kleines Info) ===== */
+.footer{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap:10px;
+  align-items:center;
+  border-top:1px solid rgba(255,255,255,.07);
+  padding-top:10px;
+}
+.btn{
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.08);
+  color:var(--text);
+  padding:12px 12px;
+  border-radius:12px;
+  font-weight:900;
+  cursor:pointer;
+  font-size:12px;
+  min-height: 42px;
+}
+.btn.primary{background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.18)}
+.btn.danger{border-color:rgba(255,120,120,.25); background:rgba(255,120,120,.12)}
+.btn:active{transform:translateY(1px); filter:brightness(.95)}
+
+.icon-btn{
+  width: 42px;
+  height: 42px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.08);
+  color:var(--text);
+  font-weight:950;
+  cursor:pointer;
+  user-select:none;
+}
+.icon-btn:active{transform:translateY(1px); filter:brightness(.95)}
+
+/* ===== Modal (shared) ===== */
+.modal{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+}
+.modal.open{ display:flex; }
+.modal-card{
+  width: min(420px, 96vw);
+  background: color-mix(in oklab, var(--panel) 96%, #0000);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 18px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+  padding: 14px;
+}
+.modal-title{
+  margin: 0 0 6px;
+  font-size: 16px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.modal-text{
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.reveal{
+  margin: 10px 0 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px dashed rgba(255,255,255,.18);
+  background: rgba(0,0,0,.20);
+  display: none;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-align: center;
+}
+.reveal.show{ display:block; }
+.modal-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap: wrap;
+  justify-content:flex-end;
+}
+.modal-actions .btn{ flex: 1 1 auto; }
+
+/* Info Modal content */
+.kv{
+  display:grid;
+  grid-template-columns: 1fr auto;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.18);
+  margin-bottom:12px;
+}
+.kv .k{color:var(--muted); font-size:12px;}
+.kv .v{font-weight:900; letter-spacing:.02em; font-size:12px;}
+</style>
+</head>
+
+<body>
+<div class="wrapper">
+  <div class="header">
+    <h1>Wordle (DE)</h1>
+    <div class="status" id="status">Lade Wortliste…</div>
+  </div>
+
+  <div class="message" id="message"></div>
+  <div class="grid" id="grid"></div>
+  <div class="keyboard" id="keyboard"></div>
+
+  <div class="footer">
+    <button class="btn primary" id="btnNew">Neues Wort</button>
+    <button class="btn" id="btnRevealFooter">Wort auflösen</button>
+    <button class="icon-btn" id="btnInfo" aria-label="Info">i</button>
+  </div>
+</div>
+
+<!-- Game Over / Reveal Modal -->
+<div class="modal" id="modalGame" role="dialog" aria-modal="true" aria-labelledby="modalGameTitle">
+  <div class="modal-card">
+    <h2 class="modal-title" id="modalGameTitle">Game Over</h2>
+    <p class="modal-text" id="modalGameText">Du hast es leider nicht geschafft.</p>
+
+    <div class="reveal" id="revealBox"></div>
+
+    <div class="modal-actions">
+      <button class="btn" id="btnRevealInModal">Wort auflösen</button>
+      <button class="btn primary" id="btnRestart">Neues Spiel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Info Modal -->
+<div class="modal" id="modalInfo" role="dialog" aria-modal="true" aria-labelledby="modalInfoTitle">
+  <div class="modal-card">
+    <h2 class="modal-title" id="modalInfoTitle">Info</h2>
+    <p class="modal-text">Wortlisten-Status & Cache-Verwaltung.</p>
+
+    <div class="kv">
+      <div class="k">Eingabe-Wörter (a-z, 5)</div>
+      <div class="v" id="infoAccepted">—</div>
+      <div class="k">Zielwörter</div>
+      <div class="v" id="infoSolutions">—</div>
+      <div class="k">Quelle</div>
+      <div class="v" id="infoSource">—</div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn danger" id="btnClearCache">Cache löschen</button>
+      <button class="btn primary" id="btnCloseInfo">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(async () => {
+  const ROWS = 6, COLS = 5;
+
+  const WORDLIST_URL = "https://raw.githubusercontent.com/enz/german-wordlist/master/words";
+  const CACHE_KEY = "wordle_de_accepted_words_a_z_5_v4";
+
+  const SOLUTIONS = [
+    "abend","abzug","acker","adler","alarm","alpen","altar","ampel","angel","anzug",
+    "apfel","arche","armee","aroma","asche","atmen","autor","axiom","backe","baden",
+    "bauer","beere","beine","belag","beute","biene","birne","blatt","blick","blind",
+    "blitz","block","blume","bluse","boden","bogen","bohne","bonus","brand","braun",
+    "brief","brise","bruch","brust","buche","bucht","chaos","coach","creme","clown",
+    "dampf","danke","datum","dauer","decke","deich","demut","depot","diebe","dinge",
+    "dosis","draht","dreck","drill","drink","droge","druck","duell","durst","ebene",
+    "eimer","eisen","eklig","enkel","erpel","essig","extra","fabel","fahrt","falle",
+    "farbe","faust","feder","feier","feind","felge","ferne","feuer","figur","filme",
+    "firma","fisch","fleck","floor","flora","fluss","folge","forst","fotos","frack",
+    "frage","frech","fremd","frost","gabel","garbe","garne","gebet","geier","geist",
+    "genre","geste","glanz","gleis","glied","gnade","graph","greis","grill","grund",
+    "gurke","hafen","hafer","hagel","halle","handy","harfe","hauch","haupt","hebel",
+    "hecht","heide","hilfe","hirte","hitze","hobel","honig","horde","hotel","hunde",
+    "humor","ideal","image","index","insel","intro","jacke","jacht","jagen","jahre",
+    "japan","jeans","joker","jubel","junge","kabel","kakao","kamin","kampf","kanon",
+    "kante","karre","karte","kasse","kater","kekse","kerbe","kerle","kerze","kette",
+    "kiosk","kiste","klage","klang","kleid","klein","klima","knabe","knall","knopf",
+    "kopie","krach","kraft","lachs","laden","lager","lampe","lanze","larve","laser",
+    "leben","leder","leere","lehre","licht","liebe","linie","liste","liter"
+  ].filter(w => /^[a-z]{5}$/.test(w));
+
+  // DOM
+  const statusEl = document.getElementById("status");
+  const msgEl = document.getElementById("message");
+  const grid = document.getElementById("grid");
+  const keyboard = document.getElementById("keyboard");
+
+  // Modals
+  const modalGame = document.getElementById("modalGame");
+  const modalGameTitle = document.getElementById("modalGameTitle");
+  const modalGameText = document.getElementById("modalGameText");
+  const revealBox = document.getElementById("revealBox");
+
+  const modalInfo = document.getElementById("modalInfo");
+  const infoAccepted = document.getElementById("infoAccepted");
+  const infoSolutions = document.getElementById("infoSolutions");
+  const infoSource = document.getElementById("infoSource");
+
+  // Buttons
+  const btnNew = document.getElementById("btnNew");
+  const btnRevealFooter = document.getElementById("btnRevealFooter");
+  const btnInfo = document.getElementById("btnInfo");
+
+  const btnRevealInModal = document.getElementById("btnRevealInModal");
+  const btnRestart = document.getElementById("btnRestart");
+
+  const btnClearCache = document.getElementById("btnClearCache");
+  const btnCloseInfo = document.getElementById("btnCloseInfo");
+
+  function showMessage(t){ msgEl.textContent = t || ""; }
+
+  // Build Grid
+  for (let r=0; r<ROWS; r++){
+    const row = document.createElement("div");
+    row.className = "row";
+    for (let c=0; c<COLS; c++){
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      row.appendChild(tile);
+    }
+    grid.appendChild(row);
+  }
+
+  // Build Keyboard
+  const keyboardLayout = ["qwertzuiop","asdfghjkl","↵yxcvbnm⌫"];
+  keyboardLayout.forEach(row => {
+    const rowDiv = document.createElement("div");
+    rowDiv.className = "key-row";
+    [...row].forEach(k => {
+      const btn = document.createElement("button");
+      btn.className = "key";
+      btn.textContent = k;
+      if (k === "↵" || k === "⌫") btn.classList.add("wide");
+      btn.addEventListener("click", () => handleInput(k));
+      rowDiv.appendChild(btn);
+    });
+    keyboard.appendChild(rowDiv);
+  });
+
+  function resetKeyboardColors(){
+    document.querySelectorAll(".key").forEach(k => k.classList.remove("green","yellow","black"));
+  }
+
+  // Accepted list loading
+  function parseAccepted(text){
+    const out = [];
+    const seen = new Set();
+    for (const line of text.split(/\r?\n/)){
+      const w = (line || "").trim().toLowerCase();
+      if (!/^[a-z]{5}$/.test(w)) continue;
+      if (seen.has(w)) continue;
+      seen.add(w);
+      out.push(w);
+    }
+    out.sort();
+    return out;
+  }
+
+  function loadCachedAccepted(){
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    try{
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : null;
+    }catch{ return null; }
+  }
+
+  function saveCachedAccepted(arr){
+    localStorage.setItem(CACHE_KEY, JSON.stringify(arr));
+  }
+
+  async function getAcceptedWords(){
+    const cached = loadCachedAccepted();
+    if (cached && cached.length > 1000){
+      statusEl.textContent = "✓ Wortliste aus Cache";
+      return cached;
+    }
+    statusEl.textContent = "Lade große Wortliste (1× online)…";
+    const res = await fetch(WORDLIST_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error("Online-Wortliste konnte nicht geladen werden.");
+    const text = await res.text();
+    const words = parseAccepted(text);
+    const merged = Array.from(new Set([...words, ...SOLUTIONS])).sort();
+    saveCachedAccepted(merged);
+    statusEl.textContent = "✓ Wortliste geladen & gespeichert";
+    return merged;
+  }
+
+  let ACCEPTED = [];
+  let acceptedSet = new Set();
+
+  try{
+    ACCEPTED = await getAcceptedWords();
+    acceptedSet = new Set(ACCEPTED);
+    statusEl.textContent = "✓ bereit";
+  }catch(err){
+    statusEl.textContent = "❗ Fehler";
+    showMessage("Konnte die Online-Wortliste nicht laden. (Beim ersten Start brauchst du Internet.)");
+    ACCEPTED = [...SOLUTIONS];
+    acceptedSet = new Set(ACCEPTED);
+  }
+
+  function buildSolutionPool(){
+    const pool = SOLUTIONS.filter(w => acceptedSet.has(w));
+    return pool.length ? pool : SOLUTIONS;
+  }
+  let solutionPool = buildSolutionPool();
+
+  function pickTarget(){
+    return solutionPool[Math.floor(Math.random() * solutionPool.length)];
+  }
+
+  // Modal helpers
+  function openModal(modalEl){ modalEl.classList.add("open"); }
+  function closeModal(modalEl){ modalEl.classList.remove("open"); }
+
+  function hookBackdropClose(modalEl){
+    modalEl.addEventListener("click", (e) => {
+      if (e.target === modalEl) closeModal(modalEl);
+    });
+  }
+  hookBackdropClose(modalGame);
+  hookBackdropClose(modalInfo);
+
+  // Game state
+  let TARGET = pickTarget();
+  let currentRow = 0, currentCol = 0, currentWord = "", gameOver = false;
+
+  function setTile(r,c,letter){
+    const tile = grid.children[r].children[c];
+    tile.textContent = letter;
+    tile.classList.toggle("filled", !!letter);
+    tile.classList.add("bump");
+    setTimeout(()=>tile.classList.remove("bump"), 80);
+  }
+
+  function hardResetGame(){
+    for (let r=0;r<ROWS;r++){
+      for (let c=0;c<COLS;c++){
+        const tile = grid.children[r].children[c];
+        tile.textContent = "";
+        tile.className = "tile";
+      }
+    }
+    resetKeyboardColors();
+    currentRow = 0; currentCol = 0; currentWord = "";
+    gameOver = false;
+    TARGET = pickTarget();
+    revealBox.classList.remove("show");
+    revealBox.textContent = "";
+    closeModal(modalGame);
+    showMessage("");
+  }
+
+  function scoreGuess(guess, target){
+    const res = Array(COLS).fill("black");
+    const t = [...target];
+    const g = [...guess];
+
+    for (let i=0;i<COLS;i++){
+      if (g[i] === t[i]){
+        res[i] = "green";
+        t[i] = null; g[i] = null;
+      }
+    }
+    for (let i=0;i<COLS;i++){
+      if (g[i] == null) continue;
+      const idx = t.indexOf(g[i]);
+      if (idx !== -1){
+        res[i] = "yellow";
+        t[idx] = null;
+      }
+    }
+    return res;
+  }
+
+  function updateKeyColor(letter, color){
+    const rank = { black: 1, yellow: 2, green: 3 };
+    document.querySelectorAll(".key").forEach(k => {
+      if (k.textContent !== letter) return;
+      const current =
+        k.classList.contains("green") ? "green" :
+        k.classList.contains("yellow") ? "yellow" :
+        k.classList.contains("black") ? "black" : null;
+
+      if (!current || rank[color] > rank[current]){
+        k.classList.remove("green","yellow","black");
+        k.classList.add(color);
+      }
+    });
+  }
+
+  function paintRow(r, colors, guess){
+    const rowTiles = grid.children[r].children;
+    for (let i=0;i<COLS;i++){
+      rowTiles[i].classList.add(colors[i]);
+      updateKeyColor(guess[i], colors[i]);
+    }
+  }
+
+  function handleInput(key){
+    if (gameOver) return;
+
+    if (key === "⌫"){
+      if (currentCol > 0){
+        currentCol--;
+        currentWord = currentWord.slice(0,-1);
+        setTile(currentRow, currentCol, "");
+      }
+      return;
+    }
+
+    if (key === "↵"){
+      submit();
+      return;
+    }
+
+    if (!/^[a-z]$/.test(key)) return;
+
+    if (currentCol < COLS){
+      currentWord += key;
+      setTile(currentRow, currentCol, key);
+      currentCol++;
+    }
+  }
+
+  document.addEventListener("keydown", e => {
+    if (gameOver) return;
+    if (e.key === "Enter") handleInput("↵");
+    else if (e.key === "Backspace") handleInput("⌫");
+    else if (/^[a-zA-Z]$/.test(e.key)) handleInput(e.key.toLowerCase());
+  });
+
+  function submit(){
+    if (currentWord.length < COLS){
+      showMessage("Zu kurz (5 Buchstaben).");
+      return;
+    }
+    if (!acceptedSet.has(currentWord)){
+      showMessage("Wort nicht erlaubt.");
+      return;
+    }
+
+    const colors = scoreGuess(currentWord, TARGET);
+    paintRow(currentRow, colors, currentWord);
+
+    if (currentWord === TARGET){
+      showMessage("🎉 Gewonnen!");
+      gameOver = true;
+      return;
+    }
+
+    currentRow++;
+    currentCol = 0;
+    currentWord = "";
+    showMessage("");
+
+    if (currentRow >= ROWS){
+      gameOver = true;
+      modalGameTitle.textContent = "Game Over";
+      modalGameText.textContent = "Du hast 6x daneben geraten.";
+      revealBox.classList.remove("show");
+      revealBox.textContent = "";
+      openModal(modalGame);
+    }
+  }
+
+  // Reveal
+  function revealWord(showGameModal){
+    revealBox.textContent = TARGET.toUpperCase();
+    revealBox.classList.add("show");
+    if (showGameModal) openModal(modalGame);
+  }
+
+  btnRevealFooter.addEventListener("click", () => {
+    // Zeigt die Auflösung immer im Game-Modal (auch während des Spiels)
+    modalGameTitle.textContent = "Auflösung";
+    modalGameText.textContent = gameOver ? "Das Wort war:" : "Das Zielwort ist:";
+    revealWord(true);
+  });
+
+  btnRevealInModal.addEventListener("click", () => {
+    revealWord(true);
+  });
+
+  btnRestart.addEventListener("click", hardResetGame);
+  btnNew.addEventListener("click", hardResetGame);
+
+  // Info modal content + cache clear
+  function refreshInfoModal(){
+    infoAccepted.textContent = `${ACCEPTED.length.toLocaleString("de-DE")}`;
+    infoSolutions.textContent = `${SOLUTIONS.length}`;
+    infoSource.textContent = localStorage.getItem(CACHE_KEY) ? "Cache" : "Online/Fallback";
+  }
+
+  btnInfo.addEventListener("click", () => {
+    refreshInfoModal();
+    openModal(modalInfo);
+  });
+
+  btnCloseInfo.addEventListener("click", () => closeModal(modalInfo));
+
+  btnClearCache.addEventListener("click", () => {
+    localStorage.removeItem(CACHE_KEY);
+    closeModal(modalInfo);
+    showMessage("Cache gelöscht. Seite neu laden, um die Online-Liste erneut zu holen.");
+    statusEl.textContent = "Cache gelöscht";
+  });
+
+})();
+</script>
+</body>
+</html>
