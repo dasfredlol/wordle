@@ -9,104 +9,172 @@
 :root{
   --bg:#0f1115; --panel:#151923; --tile:#222736; --border:#2f3647;
   --text:#e8eaf0; --muted:#9aa3b2;
+  --gray:#7f8795; --black:#3a3a3c; --yellow:#c9b458; --green:#6aaa64;
 
-  --gray:#7f8795;
-  --black:#3a3a3c;
-  --yellow:#c9b458;
-  --green:#6aaa64;
-
+  --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
-*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial}
-html,body{height:100%}
+
+*{ box-sizing:border-box; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial; }
+html,body{ height:100%; }
+
 body{
   margin:0;
   min-height:100svh;
   display:grid;
   place-items:center;
-  padding: max(14px, env(safe-area-inset-top, 0px)) 14px calc(14px + var(--safe-bottom));
+  padding: calc(12px + var(--safe-top)) 12px calc(12px + var(--safe-bottom));
   background:radial-gradient(1200px 800px at 50% 10%, #1a2040 0%, var(--bg) 55%);
   color:var(--text);
 }
 
+/* ===== App shell ===== */
 .wrapper{
-  width:min(460px, 96vw);
+  width:min(520px, 98vw);
   background:color-mix(in oklab, var(--panel) 92%, transparent);
   border:1px solid color-mix(in oklab, var(--border) 70%, transparent);
   border-radius:18px;
   box-shadow:0 10px 30px rgba(0,0,0,.35);
-  padding:16px;
+  padding:14px;
 }
+
+/* Handy */
+@media (max-width: 520px){
+  body{ padding: calc(8px + var(--safe-top)) 8px calc(8px + var(--safe-bottom)); }
+  .wrapper{
+    width:100%;
+    border-radius:16px;
+    padding:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);
+  }
+}
+
+/* ======= NEU: Scale-Fix für schmale Displays =======
+   Statt "gequetscht" -> komplette App proportional kleiner */
+.scale-shell{
+  transform-origin: top center;
+}
+
+/* iPhone SE / sehr schmal */
 @media (max-width: 380px){
-  .wrapper{ padding:14px; border-radius:16px; }
+  .scale-shell{ transform: scale(0.94); }
 }
 
-.header{display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:6px}
-h1{margin:0; font-size:16px; letter-spacing:.08em; text-transform:uppercase}
-.status{font-size:12px; color:var(--muted); text-align:right}
-.message{min-height:22px; margin:8px 0 12px; display:grid; place-items:center; font-size:13px; color:var(--muted)}
+/* ultra schmal */
+@media (max-width: 340px){
+  .scale-shell{ transform: scale(0.88); }
+}
 
+/* =================================================== */
+
+.app{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+/* ===== Header ===== */
+.header{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
+}
+h1{
+  margin:0;
+  font-size:15px;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+}
+.status{
+  font-size:12px;
+  color:var(--muted);
+  text-align:right;
+}
+.message{
+  min-height:20px;
+  display:grid;
+  place-items:center;
+  font-size:13px;
+  color:var(--muted);
+}
+
+/* ===== Grid ===== */
+.grid-wrap{
+  display:flex;
+  justify-content:center;
+}
 .grid{
-  display:grid; grid-template-rows:repeat(6,1fr);
+  width:min(410px, 96vw);
+  display:grid;
+  grid-template-rows:repeat(6, 1fr);
   gap:8px;
-  margin:0 auto 12px;
   padding:10px;
   border-radius:14px;
   background:rgba(0,0,0,.18);
   border:1px solid rgba(255,255,255,.04);
 }
-.row{display:grid; grid-template-columns:repeat(5,1fr); gap:8px}
+.row{
+  display:grid;
+  grid-template-columns:repeat(5, 1fr);
+  gap:8px;
+}
 
 .tile{
-  aspect-ratio:1/1;
+  aspect-ratio: 1 / 1;
   background:var(--tile);
   border:1.5px solid var(--border);
   border-radius:12px;
-  display:grid; place-items:center;
-  font-size: clamp(20px, 6vw, 26px);
-  font-weight:850;
+  display:grid;
+  place-items:center;
+  font-weight:900;
   text-transform:uppercase;
   user-select:none;
-  transition:transform .08s ease, background .2s ease, border-color .2s ease;
+  font-size: clamp(18px, 5.2vw, 26px);
+  transition: transform .08s ease, background .2s ease, border-color .2s ease;
 }
-.tile.filled{border-color:color-mix(in oklab, var(--gray) 60%, var(--border))}
-.tile.bump{transform:scale(1.03)}
-.tile.green{background:var(--green); border-color:var(--green)}
-.tile.yellow{background:var(--yellow); border-color:var(--yellow)}
-.tile.black{background:var(--black); border-color:var(--black)}
+.tile.filled{ border-color: color-mix(in oklab, var(--gray) 60%, var(--border)); }
+.tile.bump{ transform: scale(1.03); }
+.tile.green{ background:var(--green); border-color:var(--green); }
+.tile.yellow{ background:var(--yellow); border-color:var(--yellow); }
+.tile.black{ background:var(--black); border-color:var(--black); }
 
+/* ===== Keyboard ===== */
 .keyboard{
+  width:min(520px, 100%);
   display:grid;
   gap:8px;
-  margin-bottom:8px;
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
-.key-row{display:flex; justify-content:center; gap:6px}
-
+.key-row{
+  display:flex;
+  gap:6px;
+  justify-content:center;
+}
 .key{
   flex: 1 1 0;
-  border:1px solid rgba(255,255,255,.07);
-  background:color-mix(in oklab, var(--gray) 80%, #0000);
-  color:#fff;
-  border-radius:10px;
-  padding: 12px 8px;
   min-width: 0;
-  min-height: 44px;
-  cursor:pointer;
-  font-weight:850;
+  min-height: 48px;
+  padding: 12px 6px;
+  border:1px solid rgba(255,255,255,.08);
+  background: color-mix(in oklab, var(--gray) 82%, #0000);
+  color:#fff;
+  border-radius:12px;
+  font-weight:900;
   text-transform:uppercase;
-  font-size: clamp(12px, 3.5vw, 14px);
-  transition:transform .05s ease, filter .1s ease, background .2s ease;
+  font-size: clamp(12px, 3.6vw, 14px);
+  cursor:pointer;
+  transition: transform .05s ease, filter .1s ease, background .2s ease;
 }
-.key:active{transform:translateY(1px); filter:brightness(.95)}
-.key.wide{flex: 1.6 1 0; min-width: 70px;}
-.key.green{background:var(--green)}
-.key.yellow{background:var(--yellow)}
-.key.black{background:var(--black)}
+.key:active{ transform: translateY(1px); filter: brightness(.95); }
+.key.wide{ flex: 1.7 1 0; min-width: 72px; }
+.key.green{ background:var(--green); }
+.key.yellow{ background:var(--yellow); }
+.key.black{ background:var(--black); }
 
-/* ===== Footer Layout (2 gleichbreite Buttons + kleines Info) ===== */
+/* ===== Footer ===== */
 .footer{
-  margin-top:10px;
   display:grid;
   grid-template-columns: 1fr 1fr auto;
   gap:10px;
@@ -115,43 +183,44 @@ h1{margin:0; font-size:16px; letter-spacing:.08em; text-transform:uppercase}
   padding-top:10px;
 }
 .btn{
+  min-height: 46px;
+  padding: 12px 12px;
+  border-radius: 14px;
   border:1px solid rgba(255,255,255,.14);
-  background:rgba(255,255,255,.08);
-  color:var(--text);
-  padding:12px 12px;
-  border-radius:12px;
-  font-weight:900;
-  cursor:pointer;
-  font-size:12px;
-  min-height: 42px;
-}
-.btn.primary{background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.18)}
-.btn.danger{border-color:rgba(255,120,120,.25); background:rgba(255,120,120,.12)}
-.btn:active{transform:translateY(1px); filter:brightness(.95)}
-
-.icon-btn{
-  width: 42px;
-  height: 42px;
-  display:grid;
-  place-items:center;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(255,255,255,.08);
+  background: rgba(255,255,255,.08);
   color:var(--text);
   font-weight:950;
+  font-size: 12px;
   cursor:pointer;
-  user-select:none;
+  -webkit-tap-highlight-color: transparent;
 }
-.icon-btn:active{transform:translateY(1px); filter:brightness(.95)}
+.btn.primary{ background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.18); }
+.btn:active{ transform: translateY(1px); filter: brightness(.95); }
 
-/* ===== Modal (shared) ===== */
+.icon-btn{
+  width:46px;
+  height:46px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.08);
+  color: var(--text);
+  font-weight:1000;
+  font-size: 16px;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.icon-btn:active{ transform: translateY(1px); filter: brightness(.95); }
+
+/* ===== Modals ===== */
 .modal{
   position: fixed;
   inset: 0;
   display: none;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: calc(14px + var(--safe-top)) 14px calc(14px + var(--safe-bottom));
   background: rgba(0,0,0,.55);
   backdrop-filter: blur(6px);
   z-index: 9999;
@@ -179,13 +248,13 @@ h1{margin:0; font-size:16px; letter-spacing:.08em; text-transform:uppercase}
 }
 .reveal{
   margin: 10px 0 12px;
-  padding: 10px 12px;
+  padding: 12px 12px;
   border-radius: 14px;
   border: 1px dashed rgba(255,255,255,.18);
   background: rgba(0,0,0,.20);
   display: none;
-  font-weight: 900;
-  letter-spacing: .12em;
+  font-weight: 1000;
+  letter-spacing: .14em;
   text-align: center;
 }
 .reveal.show{ display:block; }
@@ -197,7 +266,6 @@ h1{margin:0; font-size:16px; letter-spacing:.08em; text-transform:uppercase}
 }
 .modal-actions .btn{ flex: 1 1 auto; }
 
-/* Info Modal content */
 .kv{
   display:grid;
   grid-template-columns: 1fr auto;
@@ -208,26 +276,35 @@ h1{margin:0; font-size:16px; letter-spacing:.08em; text-transform:uppercase}
   background: rgba(0,0,0,.18);
   margin-bottom:12px;
 }
-.kv .k{color:var(--muted); font-size:12px;}
-.kv .v{font-weight:900; letter-spacing:.02em; font-size:12px;}
+.kv .k{ color:var(--muted); font-size:12px; }
+.kv .v{ font-weight:950; font-size:12px; letter-spacing:.02em; }
 </style>
 </head>
 
 <body>
 <div class="wrapper">
-  <div class="header">
-    <h1>Wordle (DE)</h1>
-    <div class="status" id="status">Lade Wortliste…</div>
-  </div>
+  <!-- NEU: scale-shell -->
+  <div class="scale-shell">
+    <div class="app">
+      <div class="header">
+        <h1>Wordle (DE)</h1>
+        <div class="status" id="status">Lade Wortliste…</div>
+      </div>
 
-  <div class="message" id="message"></div>
-  <div class="grid" id="grid"></div>
-  <div class="keyboard" id="keyboard"></div>
+      <div class="message" id="message"></div>
 
-  <div class="footer">
-    <button class="btn primary" id="btnNew">Neues Wort</button>
-    <button class="btn" id="btnRevealFooter">Wort auflösen</button>
-    <button class="icon-btn" id="btnInfo" aria-label="Info">i</button>
+      <div class="grid-wrap">
+        <div class="grid" id="grid"></div>
+      </div>
+
+      <div class="keyboard" id="keyboard"></div>
+
+      <div class="footer">
+        <button class="btn primary" id="btnNew">Neues Wort</button>
+        <button class="btn" id="btnRevealFooter">Wort auflösen</button>
+        <button class="icon-btn" id="btnInfo" aria-label="Info">ⓘ</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -236,9 +313,7 @@ h1{margin:0; font-size:16px; letter-spacing:.08em; text-transform:uppercase}
   <div class="modal-card">
     <h2 class="modal-title" id="modalGameTitle">Game Over</h2>
     <p class="modal-text" id="modalGameText">Du hast es leider nicht geschafft.</p>
-
     <div class="reveal" id="revealBox"></div>
-
     <div class="modal-actions">
       <button class="btn" id="btnRevealInModal">Wort auflösen</button>
       <button class="btn primary" id="btnRestart">Neues Spiel</button>
@@ -253,16 +328,13 @@ h1{margin:0; font-size:16px; letter-spacing:.08em; text-transform:uppercase}
     <p class="modal-text">Wortlisten-Status & Cache-Verwaltung.</p>
 
     <div class="kv">
-      <div class="k">Eingabe-Wörter (a-z, 5)</div>
-      <div class="v" id="infoAccepted">—</div>
-      <div class="k">Zielwörter</div>
-      <div class="v" id="infoSolutions">—</div>
-      <div class="k">Quelle</div>
-      <div class="v" id="infoSource">—</div>
+      <div class="k">Eingabe-Wörter (a-z, 5)</div><div class="v" id="infoAccepted">—</div>
+      <div class="k">Zielwörter</div><div class="v" id="infoSolutions">—</div>
+      <div class="k">Quelle</div><div class="v" id="infoSource">—</div>
     </div>
 
     <div class="modal-actions">
-      <button class="btn danger" id="btnClearCache">Cache löschen</button>
+      <button class="btn" id="btnClearCache">Cache löschen</button>
       <button class="btn primary" id="btnCloseInfo">Schließen</button>
     </div>
   </div>
@@ -273,7 +345,7 @@ h1{margin:0; font-size:16px; letter-spacing:.08em; text-transform:uppercase}
   const ROWS = 6, COLS = 5;
 
   const WORDLIST_URL = "https://raw.githubusercontent.com/enz/german-wordlist/master/words";
-  const CACHE_KEY = "wordle_de_accepted_words_a_z_5_v4";
+  const CACHE_KEY = "wordle_de_accepted_words_a_z_5_mobile_scale_v1";
 
   const SOLUTIONS = [
     "abend","abzug","acker","adler","alarm","alpen","altar","ampel","angel","anzug",
@@ -298,13 +370,11 @@ h1{margin:0; font-size:16px; letter-spacing:.08em; text-transform:uppercase}
     "leben","leder","leere","lehre","licht","liebe","linie","liste","liter"
   ].filter(w => /^[a-z]{5}$/.test(w));
 
-  // DOM
   const statusEl = document.getElementById("status");
   const msgEl = document.getElementById("message");
   const grid = document.getElementById("grid");
   const keyboard = document.getElementById("keyboard");
 
-  // Modals
   const modalGame = document.getElementById("modalGame");
   const modalGameTitle = document.getElementById("modalGameTitle");
   const modalGameText = document.getElementById("modalGameText");
@@ -315,20 +385,16 @@ h1{margin:0; font-size:16px; letter-spacing:.08em; text-transform:uppercase}
   const infoSolutions = document.getElementById("infoSolutions");
   const infoSource = document.getElementById("infoSource");
 
-  // Buttons
   const btnNew = document.getElementById("btnNew");
   const btnRevealFooter = document.getElementById("btnRevealFooter");
   const btnInfo = document.getElementById("btnInfo");
-
   const btnRevealInModal = document.getElementById("btnRevealInModal");
   const btnRestart = document.getElementById("btnRestart");
-
   const btnClearCache = document.getElementById("btnClearCache");
   const btnCloseInfo = document.getElementById("btnCloseInfo");
 
   function showMessage(t){ msgEl.textContent = t || ""; }
 
-  // Build Grid
   for (let r=0; r<ROWS; r++){
     const row = document.createElement("div");
     row.className = "row";
@@ -340,7 +406,6 @@ h1{margin:0; font-size:16px; letter-spacing:.08em; text-transform:uppercase}
     grid.appendChild(row);
   }
 
-  // Build Keyboard
   const keyboardLayout = ["qwertzuiop","asdfghjkl","↵yxcvbnm⌫"];
   keyboardLayout.forEach(row => {
     const rowDiv = document.createElement("div");
@@ -360,7 +425,6 @@ h1{margin:0; font-size:16px; letter-spacing:.08em; text-transform:uppercase}
     document.querySelectorAll(".key").forEach(k => k.classList.remove("green","yellow","black"));
   }
 
-  // Accepted list loading
   function parseAccepted(text){
     const out = [];
     const seen = new Set();
@@ -383,7 +447,6 @@ h1{margin:0; font-size:16px; letter-spacing:.08em; text-transform:uppercase}
       return Array.isArray(arr) ? arr : null;
     }catch{ return null; }
   }
-
   function saveCachedAccepted(arr){
     localStorage.setItem(CACHE_KEY, JSON.stringify(arr));
   }
@@ -391,17 +454,17 @@ h1{margin:0; font-size:16px; letter-spacing:.08em; text-transform:uppercase}
   async function getAcceptedWords(){
     const cached = loadCachedAccepted();
     if (cached && cached.length > 1000){
-      statusEl.textContent = "✓ Wortliste aus Cache";
+      statusEl.textContent = "✓ Wortliste (Cache)";
       return cached;
     }
-    statusEl.textContent = "Lade große Wortliste (1× online)…";
+    statusEl.textContent = "Lade Wortliste (online)…";
     const res = await fetch(WORDLIST_URL, { cache: "no-store" });
     if (!res.ok) throw new Error("Online-Wortliste konnte nicht geladen werden.");
     const text = await res.text();
     const words = parseAccepted(text);
     const merged = Array.from(new Set([...words, ...SOLUTIONS])).sort();
     saveCachedAccepted(merged);
-    statusEl.textContent = "✓ Wortliste geladen & gespeichert";
+    statusEl.textContent = "✓ Wortliste bereit";
     return merged;
   }
 
@@ -412,36 +475,27 @@ h1{margin:0; font-size:16px; letter-spacing:.08em; text-transform:uppercase}
     ACCEPTED = await getAcceptedWords();
     acceptedSet = new Set(ACCEPTED);
     statusEl.textContent = "✓ bereit";
-  }catch(err){
-    statusEl.textContent = "❗ Fehler";
-    showMessage("Konnte die Online-Wortliste nicht laden. (Beim ersten Start brauchst du Internet.)");
+  }catch(e){
+    statusEl.textContent = "❗ offline";
+    showMessage("Online-Liste konnte nicht geladen werden (beim ersten Start brauchst du Internet).");
     ACCEPTED = [...SOLUTIONS];
     acceptedSet = new Set(ACCEPTED);
   }
 
-  function buildSolutionPool(){
+  const solutionPool = (() => {
     const pool = SOLUTIONS.filter(w => acceptedSet.has(w));
     return pool.length ? pool : SOLUTIONS;
-  }
-  let solutionPool = buildSolutionPool();
+  })();
+  const pickTarget = () => solutionPool[Math.floor(Math.random() * solutionPool.length)];
 
-  function pickTarget(){
-    return solutionPool[Math.floor(Math.random() * solutionPool.length)];
-  }
-
-  // Modal helpers
-  function openModal(modalEl){ modalEl.classList.add("open"); }
-  function closeModal(modalEl){ modalEl.classList.remove("open"); }
-
-  function hookBackdropClose(modalEl){
-    modalEl.addEventListener("click", (e) => {
-      if (e.target === modalEl) closeModal(modalEl);
-    });
+  function openModal(m){ m.classList.add("open"); }
+  function closeModal(m){ m.classList.remove("open"); }
+  function hookBackdropClose(m){
+    m.addEventListener("click", (e) => { if (e.target === m) closeModal(m); });
   }
   hookBackdropClose(modalGame);
   hookBackdropClose(modalInfo);
 
-  // Game state
   let TARGET = pickTarget();
   let currentRow = 0, currentCol = 0, currentWord = "", gameOver = false;
 
@@ -462,8 +516,7 @@ h1{margin:0; font-size:16px; letter-spacing:.08em; text-transform:uppercase}
       }
     }
     resetKeyboardColors();
-    currentRow = 0; currentCol = 0; currentWord = "";
-    gameOver = false;
+    currentRow=0; currentCol=0; currentWord=""; gameOver=false;
     TARGET = pickTarget();
     revealBox.classList.remove("show");
     revealBox.textContent = "";
@@ -584,31 +637,23 @@ h1{margin:0; font-size:16px; letter-spacing:.08em; text-transform:uppercase}
     }
   }
 
-  // Reveal
-  function revealWord(showGameModal){
-    revealBox.textContent = TARGET.toUpperCase();
-    revealBox.classList.add("show");
-    if (showGameModal) openModal(modalGame);
-  }
-
-  btnRevealFooter.addEventListener("click", () => {
-    // Zeigt die Auflösung immer im Game-Modal (auch während des Spiels)
+  function reveal(showModal){
     modalGameTitle.textContent = "Auflösung";
     modalGameText.textContent = gameOver ? "Das Wort war:" : "Das Zielwort ist:";
-    revealWord(true);
-  });
+    revealBox.textContent = TARGET.toUpperCase();
+    revealBox.classList.add("show");
+    if (showModal) openModal(modalGame);
+  }
 
-  btnRevealInModal.addEventListener("click", () => {
-    revealWord(true);
-  });
-
-  btnRestart.addEventListener("click", hardResetGame);
   btnNew.addEventListener("click", hardResetGame);
+  btnRevealFooter.addEventListener("click", () => reveal(true));
 
-  // Info modal content + cache clear
+  btnRevealInModal.addEventListener("click", () => reveal(true));
+  btnRestart.addEventListener("click", hardResetGame);
+
   function refreshInfoModal(){
-    infoAccepted.textContent = `${ACCEPTED.length.toLocaleString("de-DE")}`;
-    infoSolutions.textContent = `${SOLUTIONS.length}`;
+    infoAccepted.textContent = ACCEPTED.length.toLocaleString("de-DE");
+    infoSolutions.textContent = SOLUTIONS.length.toLocaleString("de-DE");
     infoSource.textContent = localStorage.getItem(CACHE_KEY) ? "Cache" : "Online/Fallback";
   }
 
